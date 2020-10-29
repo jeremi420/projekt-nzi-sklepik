@@ -1,0 +1,36 @@
+# Use postgres/example user/password credentials
+version: "3.7"
+
+services:
+    db:
+        image: postgres:13.0
+        restart: always
+        volumes:
+            - ./init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+            - ./my-postgres.conf:/etc/postgresql/postgresql.conf
+        environment:
+            - POSTGRES_PASSWORD
+            - POSTGRES_USER
+
+    adminer:
+        image: adminer
+        restart: always
+        ports:
+            - 8080:8080
+    frontend:
+        build: ./frontend
+        container_name: frontend
+        ports:
+            - $FRONTEND_PORT:$FRONTEND_PORT
+        environment:
+            - PORT=$FRONTEND_PORT
+    backend:
+        build: ./backend
+        container_name: backend
+        ports:
+            - $BACKEND_PORT:$BACKEND_PORT
+        command: nodemon --exec babel-node app.js
+        volumes:
+            - ./backend:/usr/src/app
+        environment:
+            - PORT=$BACKEND_PORT
