@@ -1,8 +1,8 @@
 FROM node
-WORKDIR /usr/src/app
+WORKDIR /app
 COPY package*.json ./
 RUN npm install --only=dev
-ENV PATH /usr/src/app/node_modules/.bin:$PATH
+ENV PATH /app/node_modules/.bin:$PATH
 COPY . .
 EXPOSE 4000
 CMD ["node", "app.js"]

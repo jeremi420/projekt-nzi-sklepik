@@ -20,6 +20,8 @@ services:
     frontend:
         build: ./frontend
         container_name: frontend
+        volumes:
+            - ./frontend:/app
         ports:
             - $FRONTEND_PORT:$FRONTEND_PORT
         environment:
@@ -31,6 +33,6 @@ services:
             - $BACKEND_PORT:$BACKEND_PORT
         command: nodemon --exec babel-node app.js
         volumes:
-            - ./backend:/usr/src/app
+            - ./backend:/app
         environment:
             - PORT=$BACKEND_PORT
