@@ -7,8 +7,10 @@ import Grid from "@material-ui/core/Grid";
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Typography from "@material-ui/core/Typography";
+import LoadingButton from "@material-ui/lab/LoadingButton";
 import Checkbox from "@material-ui/core/Checkbox";
 import Container from "@material-ui/core/Container";
+import Collapse from "@material-ui/core/Collapse";
 import { Link as NavLink, Redirect } from "react-router-dom";
 import * as yup from "yup";
 import { useFormik } from "formik";
@@ -20,7 +22,10 @@ const validationSchema = yup.object({
         .required("Email is required"),
     password: yup
         .string("Enter your password")
-        .min(3, "Password should be of minimum 8 characters length")
+        .min(8, "Password should be of minimum 8 characters length")
+        .matches("(?=.*[a-z])", "password must contain one lower case letter")
+        .matches("(?=.*[A-Z])", "password must contain one upper case letter")
+        .matches("(?=.*[0-9])", "password must contain one number")
         .required("Password is required"),
     password2: yup
         .string("Enter your password")
@@ -44,6 +49,8 @@ const validationSchema = yup.object({
 
 function SignUp() {
     const [redirect, setRedirect] = React.useState(null);
+    const [error, setError] = React.useState(null);
+    const [pending, setPending] = React.useState(false);
     const formik = useFormik({
         initialValues: {
             email: "",
@@ -54,6 +61,8 @@ function SignUp() {
         },
         validationSchema,
         onSubmit: async (values) => {
+            console.log("1");
+            setPending(true);
             try {
                 const response = await fetch(
                     "http://localhost:4000/users/signup",
@@ -71,8 +80,14 @@ function SignUp() {
                 if (json.success) {
                     setRedirect(json.redirect);
                 }
+                if (!json.success) {
+                    setError(json.message);
+                }
             } catch (e) {
                 console.log(e);
+            } finally {
+                console.log("2");
+                setPending(false);
             }
         },
     });
@@ -89,6 +104,11 @@ function SignUp() {
                     alignItems: "center",
                 }}
             >
+                <Collapse in={!!error}>
+                    <Typography variant="subtitle1" style={{ color: "red" }}>
+                        {error}
+                    </Typography>
+                </Collapse>
                 <Avatar
                     style={{
                         margin: 8,
@@ -228,7 +248,8 @@ function SignUp() {
                             />
                         </Grid>
                     </Grid>
-                    <Button
+                    <LoadingButton
+                        pending={pending}
                         type="submit"
                         fullWidth
                         variant="contained"
@@ -238,7 +259,7 @@ function SignUp() {
                         }}
                     >
                         Sign Up
-                    </Button>
+                    </LoadingButton>
                     <Grid container justify="flex-end">
                         <Grid item>
                             <Link

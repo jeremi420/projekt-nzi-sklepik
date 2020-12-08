@@ -6,6 +6,7 @@ import Link from "@material-ui/core/Link";
 import Grid from "@material-ui/core/Grid";
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import Typography from "@material-ui/core/Typography";
+import Collapse from "@material-ui/core/Collapse";
 import Container from "@material-ui/core/Container";
 import { Link as NavLink, Redirect } from "react-router-dom";
 import FacebookLogin from "react-facebook-login/dist/facebook-login-render-props";
@@ -19,19 +20,61 @@ const validationSchema = yup.object({
         .required("Email is required"),
     password: yup
         .string("Enter your password")
-        .min(3, "Password should be of minimum 8 characters length")
+        .min(8, "Password should be of minimum 8 characters length")
+        .matches("(?=.*[a-z])", "password must contain one lower case letter")
+        .matches("(?=.*[A-Z])", "password must contain one upper case letter")
+        .matches("(?=.*[0-9])", "password must contain one number")
         .required("Password is required"),
 });
+
+function MyFaceBookLogin() {
+    return (
+        <FacebookLogin
+            appId="133304578333329"
+            fields="name,email,picture"
+            callback={(response) => {
+                console.log(response);
+                fetch("http://localhost:4000/users/login/facebook", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        access_token: response.accessToken,
+                    }),
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "*/*",
+                    },
+                    mode: "cors",
+                }).then((response) => {
+                    response.json().then((json) => {
+                        console.log(json);
+                    });
+                });
+            }}
+            render={(props) => (
+                <Button variant="contained" onClick={props.onClick}>
+                    login with facebook
+                </Button>
+            )}
+        />
+    );
+}
 
 function SignIn() {
     const [state, setState] = React.useState({
         redirect: null,
+        error: null,
     });
     const setRedirect = (redirect) =>
         setState({
             ...state,
             redirect,
         });
+    const setError = (error) => {
+        setState({
+            ...state,
+            error,
+        });
+    };
     const formik = useFormik({
         initialValues: {
             email: "",
@@ -55,6 +98,8 @@ function SignIn() {
                 const json = await response.json();
                 if (json.success) {
                     setRedirect(json.redirect);
+                } else if (!json.success) {
+                    setError(json.message);
                 }
             } catch (e) {
                 console.log(e);
@@ -82,34 +127,11 @@ function SignIn() {
                 >
                     <LockOutlinedIcon />
                 </Avatar>
-                <FacebookLogin
-                    appId="133304578333329"
-                    fields="name,email,picture"
-                    callback={(response) => {
-                        console.log(response);
-                        fetch("http://localhost:4000/users/login/facebook", {
-                            method: "POST",
-                            body: JSON.stringify({
-                                access_token: response.accessToken,
-                            }),
-                            headers: {
-                                "Content-Type": "application/json",
-                                Accept: "*/*",
-                            },
-                            mode: "cors",
-                        }).then((response) => {
-                            response.json().then((json) => {
-                                console.log(json);
-                                setRedirect(json.redirect);
-                            });
-                        });
-                    }}
-                    render={(props) => (
-                        <Button variant="contained" onClick={props.onClick}>
-                            login with facebook
-                        </Button>
-                    )}
-                />
+                <Collapse in={!!state.error}>
+                    <Typography variant="subtitle1" style={{ color: "red" }}>
+                        {state.error}
+                    </Typography>
+                </Collapse>
                 <Typography component="h1" variant="h5">
                     Sign in
                 </Typography>
