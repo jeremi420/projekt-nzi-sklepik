@@ -1,1 +1,4 @@
 node_modules
+images
+*.pyc
+.DS_Store
